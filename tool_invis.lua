@@ -52,10 +52,10 @@ local function init(mod_table)
 
       local pos = player:get_pos()
       local model_name, model = mod_table.get_nearest_model(pos)
-      local model_settings = model:get_settings()
       if not model then
         return
       end
+      local model_settings = model:get_settings()
 
       minetest.chat_send_all("State: " .. tostring(model:get_state()))
       if model:get_state() ~= model.states.ACTIVE then
