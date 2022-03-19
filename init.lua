@@ -129,6 +129,18 @@ minetest.register_chatcommand("tpto", {
   end
 })
 
+minetest.register_chatcommand("listmaps", {
+  func = function(name, param)
+    local maps = db.get_all_maps()
+    local map_list = {}
+    for k in pairs(maps) do
+      table.insert(map_list, k)
+    end
+    table.sort(map_list)
+    return true, table.concat(map_list, " ")
+  end
+})
+
 minetest.register_chatcommand("start_game", {
   privs = { },
   func = function(name, param)
