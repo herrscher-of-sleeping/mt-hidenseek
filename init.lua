@@ -89,6 +89,7 @@ dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/node_startnode.
 dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/node_border.lua").init(mod_table)
 dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/tool_invis.lua").init(mod_table)
 dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/tool_capture.lua").init(mod_table)
+dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/tool_search.lua").init(mod_table)
 
 local storage = db.storage
 
