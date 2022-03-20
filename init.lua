@@ -1,14 +1,57 @@
-local mod_table = {}
+local HideNSeek = {}
 
-local util = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/util.lua")
-local db = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/db.lua")
-mod_table.db = db
+local modpath = minetest.get_modpath(minetest.get_current_modname())
+
+local loaded_modules = {}
+
+function HideNSeek.load_module(modname)
+  if loaded_modules[modname] then
+    error("Module " .. modname .. " is already loaded")
+  end
+  loaded_modules[modname] = true
+  local path = modpath .. "/" .. modname .. ".lua"
+  return dofile(path).init(HideNSeek)
+end
+
+function HideNSeek.reload_module(modname)
+  if not loaded_modules[modname] then
+    return false, ""
+  end
+  local path = modpath .. "/" .. modname .. ".lua"
+  dofile(path).init(HideNSeek, true)
+  return true
+end
+
+local load_module = HideNSeek.load_module
+-- register modules
+load_module "db"
+load_module "util"
+load_module "gamemodel"
+
+-- register nodes
+load_module "nodes/node_startnode"
+load_module "nodes/node_border"
+-- register tools
+load_module "tools/tool_invis"
+load_module "tools/tool_capture"
+load_module "tools/tool_search"
+-- register priveleges
+load_module "privileges/hs_admin"
+-- register chat commands
+load_module "commands/hs_border"
+load_module "commands/hs_dump_maps"
+load_module "commands/hs_maps"
+load_module "commands/hs_start"
+load_module "commands/hs_tp"
+load_module "commands/hs_reload"
 
 local models = {}
 
-local gamemodel = dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/gamemodel.lua").init(mod_table)
+function HideNSeek.get_models()
+  return models
+end
 
-function mod_table.get_nearest_model(pos)
+function HideNSeek.get_nearest_model(pos)
   local nearest_distance = math.huge
   local nearest_model_name
   for model_name, model in pairs(models) do
@@ -28,7 +71,7 @@ end
 
 local timers = {}
 
-function mod_table.timer(length, callback)
+function HideNSeek.timer(length, callback)
   local timer = { remaining_time = length, callback = callback }
   timers[timer] = true
   return timer
@@ -51,7 +94,7 @@ end
 
 local multitimers = {}
 
-function mod_table.multitimer(interval, runs, callback)
+function HideNSeek.multitimer(interval, runs, callback)
   local timer = {
     remaining_time = interval,
     remaining_runs = runs,
@@ -84,101 +127,11 @@ local function update_multitimers(dt)
   end
 end
 
--- register nodes
-dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/node_startnode.lua").init(mod_table)
-dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/node_border.lua").init(mod_table)
-dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/tool_invis.lua").init(mod_table)
-dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/tool_capture.lua").init(mod_table)
-dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/tool_search.lua").init(mod_table)
-
-local storage = db.storage
-
-minetest.register_chatcommand("dump_maps", {
-  func = function(name, param)
-    return true, "Maps: " .. storage:get_string("maps")
-  end,
-})
-
-minetest.register_chatcommand("dump_models", {
-  func = function(name, param)
-    local model_names = {}
-    for model_name, model in pairs(models) do
-      local state = model:get_state()
-      table.insert(model_names, model_name .. "(" .. state .. ")")
-    end
-    return true, "Models: " .. table.concat(model_names, ", ")
-  end,
-})
-
-minetest.register_chatcommand("tpto", {
-  func = function(name, param)
-    if not (name == "test2" or name == "singleplayer") then
-      return false, "You are not allowed to tp"
-    end
-    local block = db.get_map_position(param)
-    if not block then
-      return false, "No such map: " .. param
-    end
-    local pos = {
-      x = block.x,
-      y = block.y + 1,
-      z = block.z,
-    }
-    minetest.get_player_by_name(name):set_pos(pos)
-    return true
-  end
-})
-
-minetest.register_chatcommand("listmaps", {
-  func = function(name, param)
-    local maps = db.get_all_maps()
-    local map_list = {}
-    for k in pairs(maps) do
-      table.insert(map_list, k)
-    end
-    table.sort(map_list)
-    return true, table.concat(map_list, " ")
-  end
-})
-
-minetest.register_chatcommand("start_game", {
-  privs = { },
-  func = function(name, param)
-    local params = util.split_string(param)
-    if #params < 3 then
-      return nil, "Format: /start_game map_name seeker hider1 [hider2...]"
-    end
-    local map_name = params[1]
-    local err
-    if not models[map_name] then
-      local pos = db.get_map_position(map_name)
-
-      if not pos then
-        return false, "No such map found: '" .. map_name .. "'"
-      end
-
-      models[map_name], err = gamemodel.new(map_name, pos)
-    end
-
-    if not models[map_name] then
-      return false, err
-    end
-
-    local seeker = params[2]
-    local hiders = {}
-    for i = 3, #params do
-      table.insert(hiders, params[i])
-    end
-
-    return models[map_name]:start_game(seeker, hiders)
-  end,
-})
-
 local function initialize_models()
-  local all_maps = db.get_all_maps()
+  local all_maps = HideNSeek.db.get_all_maps()
   for map_name, map_pos in pairs(all_maps) do
     local err
-    models[map_name], err = gamemodel.new(map_name, map_pos)
+    models[map_name], err = HideNSeek.Gamemodel(map_name, map_pos)
     if not models[map_name] then
       return false, err
     end

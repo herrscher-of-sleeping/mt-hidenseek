@@ -1,5 +1,4 @@
-local function init(mod_table)
-  local db = mod_table.db
+local function init(HideNSeek)
   minetest.register_node("hidenseek:border", {
     description = "Glasslike Framed Drawtype Border Node",
     drawtype = "glasslike",

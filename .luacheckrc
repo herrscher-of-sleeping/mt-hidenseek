@@ -1,3 +1,7 @@
+globals = {
+    "math"
+}
+
 read_globals = {
     "DIR_DELIM", "INIT",
 
@@ -15,8 +19,6 @@ read_globals = {
     "PcgRandom",
     "ItemStack",
     "AreaStore",
-
-    "HideNSeek",
 
     "vector",
 

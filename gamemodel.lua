@@ -1,4 +1,4 @@
-local HideNSeekMod
+local HideNSeek
 
 local unpack = _G.unpack or table.unpack
 local model_metatable = {}
@@ -40,11 +40,11 @@ function model_metatable:start()
   local function error() end
   self._settings = read_settings()
 
-  HideNSeekMod.multitimer(1, self._settings.warmup_time, function(count)
+  HideNSeek.multitimer(1, self._settings.warmup_time, function(count)
     minetest.chat_send_all("Starting game... count " .. count)
     if count == self._settings.warmup_time then
       self._state = self.states.ACTIVE
-      HideNSeekMod.timer(self._settings.game_time, function()
+      HideNSeek.timer(self._settings.game_time, function()
         self:_game_finish_callback()
       end)
     end
@@ -145,7 +145,7 @@ function model_metatable:update(dt)
     if #self._hiders == 0 then
       minetest.chat_send_all("All rebels found")
       self._state = self.states.FADE
-      HideNSeekMod.timer(self._settings.finish_time, function()
+      HideNSeek.timer(self._settings.finish_time, function()
         self:_game_finish_callback()
       end)
     end
@@ -172,10 +172,8 @@ local function make_model(map_name, pos)
 end
 
 return {
-  init = function(HideNSeekMod_)
-    HideNSeekMod = HideNSeekMod_
-    return {
-      new = make_model
-    }
+  init = function(mod_namespace)
+    HideNSeek = mod_namespace
+    HideNSeek.Gamemodel = make_model
   end
 }

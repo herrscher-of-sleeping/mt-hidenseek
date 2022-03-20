@@ -28,4 +28,8 @@ function M.get_all_maps()
   return minetest.deserialize(storage:get_string("maps")) or {}
 end
 
-return M
+return {
+  init = function(mod_namespace)
+    mod_namespace.db = M
+  end
+}
