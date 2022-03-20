@@ -44,6 +44,7 @@ load_module "commands/hs_maps"
 load_module "commands/hs_start"
 load_module "commands/hs_tp"
 load_module "commands/hs_reload"
+load_module "commands/hs_spawn"
 
 local models = {}
 
@@ -105,6 +106,21 @@ function HideNSeek.multitimer(interval, runs, callback)
   multitimers[timer] = true
 
   return timer
+end
+
+function HideNSeek.set_spawn_point(pos)
+  HideNSeek._spawn_point = pos
+  HideNSeek.db.storage:set_string("spawn_point", minetest.serialize(pos))
+end
+
+function HideNSeek.get_spawn_point()
+  local spawn_point_str = HideNSeek.db.storage:get_string("spawn_point")
+  local spawn_point = { 0, 0, 0 }
+  if spawn_point_str and spawn_point_str ~= "" then
+    spawn_point = minetest.deserialize(spawn_point_str)
+  end
+  HideNSeek._spawn_point = spawn_point
+  return HideNSeek._spawn_point
 end
 
 local function update_multitimer(timer, dt)
