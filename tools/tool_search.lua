@@ -35,7 +35,8 @@ local tool_description = {
       texture = "hidenseek_search_particle.png",
     })
 
-    HideNSeek.timer(model_settings.search_tool_cooldown, function()
+    minetest.log("debug", minetest.serialize(model_settings))
+    model:timer(model_settings.search_tool_cooldown, function()
       -- model.tool_locks[player_name] = nil
     end)
   end,
@@ -50,7 +51,7 @@ local function init(mod_namespace)
   HideNSeek = mod_namespace
   search_lock_by_player = {}
 
-  minetest.register_tool("hidenseek:search", tool_description)
+  minetest.register_tool("hidenseek:search_tool", tool_description)
 end
 
 return {

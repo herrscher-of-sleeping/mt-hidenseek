@@ -37,7 +37,7 @@ local tool_description = {
 
 local function init(mod_namespace)
   HideNSeek = mod_namespace
-  minetest.register_tool("hidenseek:capture", tool_description)
+  minetest.register_tool("hidenseek:capture_tool", tool_description)
 end
 
 return {

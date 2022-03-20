@@ -5,19 +5,6 @@ local node_description = {
   tiles = {"wool_white.png"},
   is_ground_content = true,
   groups = {  oddly_breakable_by_hand = 3 },
-  on_punch = function(pos)
-    -- local round_pos = {
-    --   x = math.floor(pos.x),
-    --   y = math.floor(pos.y),
-    --   z = math.floor(pos.z),
-    -- }
-    -- if need_wall then
-    --   toggle_wall(round_pos, 30, 20, "hidenseek:border")
-    -- else
-    --   toggle_wall(round_pos, 30, 20, "air")
-    -- end
-    -- need_wall = not need_wall
-  end,
   on_construct = function(pos)
     local meta = minetest.get_meta(pos)
     meta:set_string("formspec", "field[text;;${text}]")

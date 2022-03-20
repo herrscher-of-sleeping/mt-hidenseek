@@ -26,7 +26,7 @@ local load_module = HideNSeek.load_module
 -- register modules
 load_module "db"
 load_module "util"
-load_module "gamemodel"
+load_module "game/model"
 
 -- register nodes
 load_module "nodes/node_startnode"
@@ -70,44 +70,6 @@ function HideNSeek.get_nearest_model(pos)
   return nearest_model_name, models[nearest_model_name]
 end
 
-local timers = {}
-
-function HideNSeek.timer(length, callback)
-  local timer = { remaining_time = length, callback = callback }
-  timers[timer] = true
-  return timer
-end
-
-local function update_timer(timer, dt)
-  if timer.remaining_time <= 0 then
-    timer.callback()
-    timers[timer] = nil
-  else
-    timer.remaining_time = timer.remaining_time - dt
-  end
-end
-
-local function update_timers(dt)
-  for timer in pairs(timers) do
-    update_timer(timer, dt)
-  end
-end
-
-local multitimers = {}
-
-function HideNSeek.multitimer(interval, runs, callback)
-  local timer = {
-    remaining_time = interval,
-    remaining_runs = runs,
-    callback = callback,
-    interval = interval,
-    runs = runs,
-  }
-  multitimers[timer] = true
-
-  return timer
-end
-
 function HideNSeek.set_spawn_point(pos)
   HideNSeek._spawn_point = pos
   HideNSeek.db.storage:set_string("spawn_point", minetest.serialize(pos))
@@ -121,26 +83,6 @@ function HideNSeek.get_spawn_point()
   end
   HideNSeek._spawn_point = spawn_point
   return HideNSeek._spawn_point
-end
-
-local function update_multitimer(timer, dt)
-  if timer.remaining_time <= 0 then
-    timer.remaining_time = timer.remaining_time + timer.interval
-    timer.remaining_runs = timer.remaining_runs - 1
-
-    timer.callback(timer.runs - timer.remaining_runs)
-    if timer.remaining_runs == 0 then
-      multitimers[timer] = nil
-    end
-  else
-    timer.remaining_time = timer.remaining_time - dt
-  end
-end
-
-local function update_multitimers(dt)
-  for timer in pairs(multitimers) do
-    update_multitimer(timer, dt)
-  end
 end
 
 local function initialize_models()
@@ -157,8 +99,6 @@ end
 initialize_models()
 
 minetest.register_globalstep(function(dt)
-  update_timers(dt)
-  update_multitimers(dt)
   for map_name, model in pairs(models) do
     model:update(dt)
   end

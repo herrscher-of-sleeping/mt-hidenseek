@@ -17,7 +17,30 @@ local settings_fields = {
   "finish_time",
   "invis_time",
   "invis_cooldown",
+  "search_tool_cooldown",
 }
+
+function model_metatable:timer(length, on_finish)
+  if not length then
+    error("Length should positive number")
+  end
+  local timer = { remaining_time = length, callback = on_finish }
+  self._timers[timer] = true
+  return timer
+end
+
+function model_metatable:multitimer(interval, runs, on_finish)
+  local timer = {
+    remaining_time = interval,
+    remaining_runs = runs,
+    callback = on_finish,
+    interval = interval,
+    runs = runs,
+  }
+  self._multitimers[timer] = true
+
+  return timer
+end
 
 local function read_settings()
   local default_settings_object = Settings(minetest.get_modpath("hidenseek") .. "/default_settings.conf")
@@ -27,24 +50,28 @@ local function read_settings()
   for _, field in pairs(settings_fields) do
     local field_path = "hidenseek." .. field
     settings_table[field] = settings_object:get(field_path) or default_settings_object:get(field_path)
+    if tonumber(settings_table[field]) then
+      settings_table[field] = tonumber(settings_table[field])
+    end
     if not settings_table[field] then
       error(field_path .. " is not set in configuration")
     end
   end
+  minetest.log("debug", minetest.serialize(settings_table))
   return settings_table
 end
 
 function model_metatable:start()
   self._state = self.states.WARMUP
-
-  local function error() end
   self._settings = read_settings()
 
-  HideNSeek.multitimer(1, self._settings.warmup_time, function(count)
+  self:_add_player_items()
+
+  self:multitimer(1, self._settings.warmup_time, function(count)
     minetest.chat_send_all("Starting game... count " .. count)
     if count == self._settings.warmup_time then
       self._state = self.states.ACTIVE
-      HideNSeek.timer(self._settings.game_time, function()
+      self:timer(self._settings.game_time, function()
         self:_game_finish_callback()
       end)
     end
@@ -140,20 +167,103 @@ function model_metatable:_game_finish_callback()
   minetest.chat_send_all("ggwp")
 end
 
+function model_metatable:_update_timers(dt)
+  for timer in pairs(self._timers) do
+    if timer.remaining_time <= 0 then
+      timer.callback()
+      self._timers[timer] = nil
+    else
+      timer.remaining_time = timer.remaining_time - dt
+    end
+  end
+
+  for timer in pairs(self._multitimers) do
+    if timer.remaining_time <= 0 then
+      timer.remaining_time = timer.remaining_time + timer.interval
+      timer.remaining_runs = timer.remaining_runs - 1
+      timer.callback(timer.runs - timer.remaining_runs)
+      if timer.remaining_runs == 0 then
+        self._multitimers[timer] = nil
+      end
+    else
+      timer.remaining_time = timer.remaining_time - dt
+    end
+  end
+end
+
 function model_metatable:update(dt)
+  self:_update_timers(dt)
   if self._state == self.states.ACTIVE then
     if #self._hiders == 0 then
       minetest.chat_send_all("All rebels found")
       self._state = self.states.FADE
-      HideNSeek.timer(self._settings.finish_time, function()
+      self._timers = {}
+      self._multitimers = {}
+      self:_remove_player_items()
+      self:timer(self._settings.finish_time, function()
         self:_game_finish_callback()
       end)
     end
   end
 end
 
+function model_metatable:get_all_players()
+  local all_players_in_model = {}
+  for _, name in pairs(self._seekers) do
+    table.insert(all_players_in_model, name)
+  end
+  for _, name in pairs(self._hiders) do
+    table.insert(all_players_in_model, name)
+  end
+  return all_players_in_model
+end
+
+function model_metatable:get_hiders()
+  return self._hiders
+end
+
+function model_metatable:get_seekers()
+  return self._seekers
+end
+
+function model_metatable:_add_player_items()
+  local hiders = self:get_hiders()
+  for _, name in pairs(hiders) do
+    local player = minetest.get_player_by_name(name)
+    if player then
+      player:get_inventory():set_list("main", {
+        "hidenseek:invis_tool",
+      })
+    end
+  end
+
+  local seekers = self:get_seekers()
+  for _, name in pairs(seekers) do
+    local player = minetest.get_player_by_name(name)
+    if player then
+      player:get_inventory():set_list("main", {
+        "hidenseek:capture_tool",
+        "hidenseek:search_tool",
+      })
+    end
+  end
+end
+
+function model_metatable:_remove_player_items()
+  local all_players_in_model = self:get_all_players()
+  for _, name in pairs(all_players_in_model) do
+    local player = minetest.get_player_by_name(name)
+    if player then
+      player:get_inventory():set_list("main", {})
+    end
+  end
+end
+
 function model_metatable:get_state()
   return self._state
+end
+
+function model_metatable:destroy()
 end
 
 local function make_model(map_name, pos)
@@ -164,6 +274,8 @@ local function make_model(map_name, pos)
     _hiders = {},
     _captured_hiders = {},
     _state = model_metatable.states.INACTIVE,
+    _timers = {},
+    _multitimers = {},
   }
 
   setmetatable(model, model_metatable)
