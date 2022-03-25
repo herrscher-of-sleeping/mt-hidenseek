@@ -40,6 +40,19 @@ local tool_description = {
   inventory_image = "hidenseek_invis_tool.png",
   stack_max = 1,
   on_use = function(itemstack, player, idk)
+    local init_wear = math.floor(65535)
+    minetest.get_player_by_name("singleplayer"):get_inventory():set_stack("main", 1, "hidenseek:invis_tool 1 " .. init_wear)
+    local pos = player:get_pos()
+    local _, model = HideNSeek.get_nearest_model(pos)
+
+    model:multitimer(1, 4, function(count)
+      if count == 4 then
+        minetest.get_player_by_name("singleplayer"):get_inventory():set_stack("main", 1, "hidenseek:invis_tool 1")
+      else
+        local wear = math.floor(65535 * (4.0 - count) / 4.0)
+        minetest.get_player_by_name("singleplayer"):get_inventory():set_stack("main", 1, "hidenseek:invis_tool 1 " .. wear)
+      end
+    end)
     local player_name = player:get_player_name()
     if invisible_players[player_name] then
       return
@@ -48,18 +61,16 @@ local tool_description = {
       return
     end
 
-    local pos = player:get_pos()
-    local _, model = HideNSeek.get_nearest_model(pos)
+    -- local pos = player:get_pos()
+    -- local _, model = HideNSeek.get_nearest_model(pos)
     if not model then
       return
     end
     local model_settings = model:get_settings()
 
-    minetest.chat_send_all("State: " .. tostring(model:get_state()))
     if model:get_state() ~= model.states.ACTIVE then
       return
     end
-    minetest.chat_send_all("test")
     if set_player_invisibility(player, true) then
       model:timer(model_settings.invis_time, function()
         local player_maybe = minetest.get_player_by_name(player_name)
@@ -78,12 +89,24 @@ local tool_description = {
   wield_scale = 1,
 }
 
+local tool_cooldown_description = {
+  description = "Invis tool",
+  inventory_image = "hidenseek_invis_tool.png",
+  on_use = function(itemstack, player, idk)
+  end,
+  type = "tool",
+  wield_scale = 1,
+}
+
 local function init(mod_namespace)
   HideNSeek = mod_namespace
   invisible_players = {}
   cooldown_by_player_name = {}
 
+  -- HideNSeek.register_skill("hidenseek:")
+
   minetest.register_tool("hidenseek:invis_tool", tool_description)
+  minetest.register_tool("hidenseek:invis_tool_cooldown", tool_cooldown_description)
 end
 
 return {

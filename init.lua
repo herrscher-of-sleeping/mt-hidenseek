@@ -70,6 +70,18 @@ function HideNSeek.get_nearest_model(pos)
   return nearest_model_name, models[nearest_model_name]
 end
 
+function HideNSeek.get_model_by_player(player)
+  if type(player) == "string" then
+    player = minetest.get_player_by_name(player)
+  end
+  if not player then
+    return
+  end
+  local pos = player:get_pos()
+  local _, model = HideNSeek.get_nearest_model(pos)
+  return model
+end
+
 function HideNSeek.set_spawn_point(pos)
   HideNSeek._spawn_point = pos
   HideNSeek.db.storage:set_string("spawn_point", minetest.serialize(pos))
@@ -98,8 +110,16 @@ end
 
 initialize_models()
 
+local t = 0
+
 minetest.register_globalstep(function(dt)
-  for map_name, model in pairs(models) do
+  t = t + dt
+  if t > 1 then
+    t = 0
+    minetest.chat_send_all(minetest.serialize(minetest.get_player_by_name("singleplayer"):get_player_control()))
+  end
+  for _, model in pairs(models) do
     model:update(dt)
   end
 end)
+
