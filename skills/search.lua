@@ -1,14 +1,13 @@
 local HideNSeek
-local search_lock_by_player
 
-local tool_description = {
-  description = "Search tool",
+local skill_description = {
+  description = "Search for hiders",
   inventory_image = "hidenseek_capture_tool.png",
   stack_max = 1,
   on_use = function(itemstack, player, pointed_thing)
     local player_name = player:get_player_name()
     local pos = player:get_pos()
-    local _, model = HideNSeek.get_nearest_model(pos)
+    local model = HideNSeek.get_nearest_model(pos)
     if not model then
       return
     end
@@ -16,7 +15,6 @@ local tool_description = {
     if not model_settings then
       return
     end
-    minetest.chat_send_all("model_settings: " .. tostring(model_settings))
     local particle_pos = player:get_pos()
     local view_dir = player:get_look_dir()
     view_dir.y = 0
@@ -35,13 +33,10 @@ local tool_description = {
       texture = "hidenseek_search_particle.png",
     })
 
-    minetest.log("debug", minetest.serialize(model_settings))
     model:timer(model_settings.search_tool_cooldown, function()
       -- model.tool_locks[player_name] = nil
     end)
-  end,
-  on_drop = function(itemstack, player, pos)
-    minetest.chat_send_all("Dropping this is illegal!!! This incident will be reported!! And you will go to jail!!")
+    return true
   end,
   type = "tool",
   wield_scale = 1,
@@ -49,9 +44,7 @@ local tool_description = {
 
 local function init(mod_namespace)
   HideNSeek = mod_namespace
-  search_lock_by_player = {}
-
-  minetest.register_tool("hidenseek:search_tool", tool_description)
+  HideNSeek.register_skill("hidenseek:search", skill_description)
 end
 
 return {

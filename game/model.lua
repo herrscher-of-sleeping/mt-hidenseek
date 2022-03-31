@@ -11,15 +11,6 @@ model_metatable.states = {
   FADE = 4,
 }
 
-local settings_fields = {
-  "warmup_time",
-  "game_time",
-  "finish_time",
-  "invis_time",
-  "invis_cooldown",
-  "search_tool_cooldown",
-}
-
 function model_metatable:timer(length, on_finish)
   if not length then
     error("Length should positive number")
@@ -42,28 +33,9 @@ function model_metatable:multitimer(interval, runs, on_finish)
   return timer
 end
 
-local function read_settings()
-  local default_settings_object = Settings(minetest.get_modpath("hidenseek") .. "/default_settings.conf")
-  local settings_object = minetest.settings
-
-  local settings_table = {}
-  for _, field in pairs(settings_fields) do
-    local field_path = "hidenseek." .. field
-    settings_table[field] = settings_object:get(field_path) or default_settings_object:get(field_path)
-    if tonumber(settings_table[field]) then
-      settings_table[field] = tonumber(settings_table[field])
-    end
-    if not settings_table[field] then
-      error(field_path .. " is not set in configuration")
-    end
-  end
-  minetest.log("debug", minetest.serialize(settings_table))
-  return settings_table
-end
-
 function model_metatable:start()
   self._state = self.states.WARMUP
-  self._settings = read_settings()
+  self._settings = HideNSeek.read_settings()
 
   self:_add_player_items()
 
@@ -122,6 +94,20 @@ end
 
 function model_metatable:get_pos()
   return { x = self._pos.x, y = self._pos.y, z = self._pos.z }
+end
+
+function model_metatable:get_seekers()
+  local seekers = {}
+  for _, player_name in pairs(self._seekers) do
+    local player = minetest.get_player_by_name(player_name)
+    if player then
+      table.insert(seekers, {
+        name = player_name,
+        pos = player:get_pos()
+      })
+    end
+  end
+  return seekers
 end
 
 function model_metatable:get_hiders()
@@ -218,32 +204,25 @@ function model_metatable:get_all_players()
   return all_players_in_model
 end
 
-function model_metatable:get_hiders()
-  return self._hiders
-end
-
-function model_metatable:get_seekers()
-  return self._seekers
-end
-
 function model_metatable:_add_player_items()
   local hiders = self:get_hiders()
-  for _, name in pairs(hiders) do
-    local player = minetest.get_player_by_name(name)
+  for _, hider in pairs(hiders) do
+    local player = minetest.get_player_by_name(hider.name)
     if player then
       player:get_inventory():set_list("main", {
-        "hidenseek:invis_tool",
+        "hidenseek:invis",
       })
     end
   end
 
   local seekers = self:get_seekers()
-  for _, name in pairs(seekers) do
-    local player = minetest.get_player_by_name(name)
+  for _, seeker in pairs(seekers) do
+    local player = minetest.get_player_by_name(seeker.name)
     if player then
       player:get_inventory():set_list("main", {
-        "hidenseek:capture_tool",
-        "hidenseek:search_tool",
+        "hidenseek:invis",
+        "hidenseek:capture",
+        "hidenseek:search",
       })
     end
   end
@@ -261,6 +240,10 @@ end
 
 function model_metatable:get_state()
   return self._state
+end
+
+function model_metatable:get_name()
+  return self._map_name
 end
 
 function model_metatable:destroy()

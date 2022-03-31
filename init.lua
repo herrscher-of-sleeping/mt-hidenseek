@@ -27,14 +27,16 @@ local load_module = HideNSeek.load_module
 load_module "db"
 load_module "util"
 load_module "game/model"
+load_module "game/settings"
+load_module "game/register_skill"
 
 -- register nodes
 load_module "nodes/node_startnode"
 load_module "nodes/node_border"
--- register tools
-load_module "tools/tool_invis"
-load_module "tools/tool_capture"
-load_module "tools/tool_search"
+-- register skills
+load_module "skills/invis"
+load_module "skills/capture"
+load_module "skills/search"
 -- register priveleges
 load_module "privileges/hs_admin"
 -- register chat commands
@@ -67,7 +69,7 @@ function HideNSeek.get_nearest_model(pos)
       nearest_model_name = model_name
     end
   end
-  return nearest_model_name, models[nearest_model_name]
+  return models[nearest_model_name]
 end
 
 function HideNSeek.get_model_by_player(player)
@@ -78,7 +80,7 @@ function HideNSeek.get_model_by_player(player)
     return
   end
   local pos = player:get_pos()
-  local _, model = HideNSeek.get_nearest_model(pos)
+  local model = HideNSeek.get_nearest_model(pos)
   return model
 end
 
@@ -116,10 +118,25 @@ minetest.register_globalstep(function(dt)
   t = t + dt
   if t > 1 then
     t = 0
-    minetest.chat_send_all(minetest.serialize(minetest.get_player_by_name("singleplayer"):get_player_control()))
   end
   for _, model in pairs(models) do
     model:update(dt)
   end
 end)
 
+--[[
+-- TODO: implement safe inventory replacement on server/game session leave/join
+-- * Player joins session: all the items are taken away and replaced with "skill" tools
+-- * Player leaves session/joins after disconnect or server crash during session:
+-- "skill" tools are removed, all the taken items are returned to inventory
+minetest.register_on_joinplayer(function(player, last_login)
+  local inventory = player:get_inventory()
+  local stack_size = inventory:get_size("main")
+  for i = 1, stack_size do
+    local item_name = inventory:get_stack("main", i):get_name()
+    if item_name:match("hidenseek:") then
+      inventory:set_stack("main", i, "")
+    end
+  end
+end)
+--]]
