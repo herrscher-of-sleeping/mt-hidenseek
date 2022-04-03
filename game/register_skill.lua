@@ -3,7 +3,7 @@ local HideNSeek
 --[[
 Skill cooldown display is implemented via tool wear
 Skills can have multiple charges which is implemented
-by registering N tools
+by registering N tools. TODO: multiple charges are to be implemented yet
 --]]
 
 local MAX_WEAR = 65535

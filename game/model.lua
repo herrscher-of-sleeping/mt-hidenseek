@@ -44,6 +44,7 @@ function model_metatable:start()
     if count == self._settings.warmup_time then
       self._state = self.states.ACTIVE
       self:timer(self._settings.game_time, function()
+        self:_return_player_items()
         self:_game_finish_callback()
       end)
     end
@@ -181,11 +182,11 @@ function model_metatable:update(dt)
   self:_update_timers(dt)
   if self._state == self.states.ACTIVE then
     if #self._hiders == 0 then
-      minetest.chat_send_all("All rebels found")
+      minetest.chat_send_all("gg wp")
       self._state = self.states.FADE
       self._timers = {}
       self._multitimers = {}
-      self:_remove_player_items()
+      self:_return_player_items()
       self:timer(self._settings.finish_time, function()
         self:_game_finish_callback()
       end)
@@ -209,6 +210,7 @@ function model_metatable:_add_player_items()
   for _, hider in pairs(hiders) do
     local player = minetest.get_player_by_name(hider.name)
     if player then
+      HideNSeek.inventory_manager.backup_player_inventory(player)
       player:get_inventory():set_list("main", {
         "hidenseek:invis",
       })
@@ -219,6 +221,7 @@ function model_metatable:_add_player_items()
   for _, seeker in pairs(seekers) do
     local player = minetest.get_player_by_name(seeker.name)
     if player then
+      HideNSeek.inventory_manager.backup_player_inventory(player)
       player:get_inventory():set_list("main", {
         "hidenseek:invis",
         "hidenseek:capture",
@@ -228,12 +231,12 @@ function model_metatable:_add_player_items()
   end
 end
 
-function model_metatable:_remove_player_items()
+function model_metatable:_return_player_items()
   local all_players_in_model = self:get_all_players()
   for _, name in pairs(all_players_in_model) do
     local player = minetest.get_player_by_name(name)
     if player then
-      player:get_inventory():set_list("main", {})
+      HideNSeek.inventory_manager.restore_player_inventory(player)
     end
   end
 end

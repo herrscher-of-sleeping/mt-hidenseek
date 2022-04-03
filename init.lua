@@ -29,7 +29,7 @@ load_module "util"
 load_module "game/model"
 load_module "game/settings"
 load_module "game/register_skill"
-
+load_module "game/inventory_manager"
 -- register nodes
 load_module "nodes/node_startnode"
 load_module "nodes/node_border"
@@ -123,20 +123,3 @@ minetest.register_globalstep(function(dt)
     model:update(dt)
   end
 end)
-
---[[
--- TODO: implement safe inventory replacement on server/game session leave/join
--- * Player joins session: all the items are taken away and replaced with "skill" tools
--- * Player leaves session/joins after disconnect or server crash during session:
--- "skill" tools are removed, all the taken items are returned to inventory
-minetest.register_on_joinplayer(function(player, last_login)
-  local inventory = player:get_inventory()
-  local stack_size = inventory:get_size("main")
-  for i = 1, stack_size do
-    local item_name = inventory:get_stack("main", i):get_name()
-    if item_name:match("hidenseek:") then
-      inventory:set_stack("main", i, "")
-    end
-  end
-end)
---]]
