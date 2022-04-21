@@ -41,6 +41,12 @@ local function init(mod_namespace)
     privs = { hs_admin = true },
     func = command_handler
   })
+  minetest.register_chatcommand("hsg", {
+    privs = { hs_admin = true },
+    func = function(name)
+      return command_handler(name, "2 singleplayer singleplayer")
+    end
+  })
 end
 
 return {

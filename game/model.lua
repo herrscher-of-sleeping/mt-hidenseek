@@ -55,10 +55,23 @@ function model_metatable:get_settings()
   return self._settings
 end
 
-function model_metatable:start_game(seeker, hiders)
-  local pos = { x = self._pos.x, y = self._pos.y, z = self._pos.z }
+local function get_direction_vector(facing_side)
+  if facing_side == "n" then
+    return vector.new(0, 0, 1)
+  elseif facing_side == "s" then
+    return vector.new(0, 0, -1)
+  elseif facing_side == "w" then
+    return vector.new(-1, 0, 0)
+  elseif facing_side == "e" then
+    return vector.new(1, 0, 0)
+  end
+  return vector.new(0, 0, 1)
+end
 
-  pos.y = pos.y + 1
+function model_metatable:start_game(seeker, hiders)
+  local pos = vector.add(self._pos, vector.new(0, 1, 0))
+  local dir = get_direction_vector(self._dir)
+  local spawn_line_dir = vector.cross(dir, vector.new(0, 1, 0))
 
   local seeker_player_object = minetest.get_player_by_name(seeker)
   if not seeker_player_object then
@@ -75,9 +88,14 @@ function model_metatable:start_game(seeker, hiders)
 
   seeker_player_object:set_pos(pos)
 
-  for i = 1, #hider_player_objects do
-    pos.x = pos.x + 1
-    hider_player_objects[i]:set_pos(pos)
+  local num_hiders = #hider_player_objects
+  for i = 1, num_hiders do
+    local offset = vector.multiply(spawn_line_dir, (i - 0.5 * num_hiders) / num_hiders)
+    local new_pos = vector.add(
+      vector.add(pos, vector.multiply(dir, 3)),
+      offset
+    )
+    hider_player_objects[i]:set_pos(new_pos)
   end
 
   self._seekers = { seeker }
@@ -252,10 +270,14 @@ end
 function model_metatable:destroy()
 end
 
-local function make_model(map_name, pos)
+local function make_model(map_name, map_info)
+  if not map_info.position then
+    minetest.log("error", "map_info: " .. minetest.serialize(map_info))
+  end
   local model = {
     _map_name = map_name,
-    _pos = pos,
+    _pos = map_info.position,
+    _dir = map_info.direction,
     _seekers = {},
     _hiders = {},
     _captured_hiders = {},
