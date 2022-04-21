@@ -33,6 +33,7 @@ load_module "game/inventory_manager"
 -- register nodes
 load_module "nodes/node_startnode"
 load_module "nodes/node_border"
+load_module "nodes/node_cover"
 -- register skills
 load_module "skills/invis"
 load_module "skills/capture"
@@ -101,9 +102,9 @@ end
 
 local function initialize_models()
   local all_maps = HideNSeek.db.get_all_maps()
-  for map_name, map_pos in pairs(all_maps) do
+  for map_name, map_info in pairs(all_maps) do
     local err
-    models[map_name], err = HideNSeek.Gamemodel(map_name, map_pos)
+    models[map_name], err = HideNSeek.Gamemodel(map_name, map_info)
     if not models[map_name] then
       return false, err
     end

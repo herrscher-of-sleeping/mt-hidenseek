@@ -1,6 +1,6 @@
-hidenseek.warmup_time (Warmup time) int 5 1 30
-hidenseek.game_time (Max game time) int 180 60 600
-hidenseek.finish_time (Max game time) int 180 60 600
+hidenseek.warmup_time (Warmup time) int 3 1 30
+hidenseek.game_time (Max game time) int 10 1 600
+hidenseek.finish_time (Max game time) int 2 1 600
 hidenseek.invis_time (Invisibility duration) int 3 1 60
 hidenseek.invis_cooldown (Invisibility cooldown) int 30 1 60
 hidenseek.search_tool_cooldown (Search tool cooldown) int 20 1 60
