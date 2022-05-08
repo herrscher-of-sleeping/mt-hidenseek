@@ -252,10 +252,14 @@ end
 function model_metatable:destroy()
 end
 
-local function make_model(map_name, pos)
+local function make_model(map_name, map_info)
+  if not map_info.position then
+    minetest.log("error", "map_info: " .. minetest.serialize(map_info))
+  end
   local model = {
     _map_name = map_name,
-    _pos = pos,
+    _pos = map_info.position,
+    _dir = map_info.direction,
     _seekers = {},
     _hiders = {},
     _captured_hiders = {},

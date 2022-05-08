@@ -1,5 +1,10 @@
 local HideNSeek
 
+local form = [[
+field[name;name;${name}]
+field[dir;direction;${dir}]
+]]
+
 local node_description = {
   description = "The initial node",
   tiles = {"wool_white.png"},
@@ -7,11 +12,11 @@ local node_description = {
   groups = {  oddly_breakable_by_hand = 3 },
   on_construct = function(pos)
     local meta = minetest.get_meta(pos)
-    meta:set_string("formspec", "field[text;;${text}]")
+    meta:set_string("formspec", form)
   end,
   on_destruct = function(pos)
     local meta = minetest.get_meta(pos)
-    local map_name = meta:get_string("text")
+    local map_name = meta:get_string("name")
     HideNSeek.db.remove_start_node(map_name)
   end,
   on_receive_fields = function(pos, formname, fields, sender)
@@ -20,27 +25,28 @@ local node_description = {
       minetest.record_protection_violation(pos, player_name)
       return
     end
-    local text = fields.text
-    if not text then
+    local name = fields.name
+    if not name then
       return
     end
-    if string.len(text) > 20 then
+    local dir = fields.dir or "n"
+    if string.len(name) > 20 then
       minetest.chat_send_player(player_name, "Map name is too long")
       return
     end
-    minetest.log("action", player_name .. " set map name \"" .. text ..
-      "\" to the map block at " .. minetest.pos_to_string(pos))
     local meta = minetest.get_meta(pos)
-    local old_map_name = meta:get_string("text")
-    meta:set_string("text", text)
+    local old_map_name = meta:get_string("name")
+    meta:set_string("name", name)
+    meta:set_string("dir", dir)
     HideNSeek.db.remove_start_node(old_map_name)
-    HideNSeek.db.add_start_node(text, pos)
+    HideNSeek.db.add_start_node(name, pos, dir)
 
-    if #text > 0 then
-      meta:set_string("infotext", text)
+    if #name > 0 then
+      meta:set_string("infotext", name)
     else
       meta:set_string("infotext", '')
     end
+    meta:set_string("formspec", form) -- update formspec in case of change in code
   end,
 }
 
