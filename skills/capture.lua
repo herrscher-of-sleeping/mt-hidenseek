@@ -17,7 +17,7 @@ local tool_description = {
     local hiders = model:get_hiders()
     for _, hider in pairs(hiders) do
       local distance = vector.distance(pos, hider.pos)
-      if distance < 2 then
+      if distance < 1 then
         local ok, msg = model:capture_hider(player:get_player_name(), hider.name)
         if ok then
           minetest.chat_send_all(("Player %s was captured by %s"):format(hider.name, player:get_player_name()))
