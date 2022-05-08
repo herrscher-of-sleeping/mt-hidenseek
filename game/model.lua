@@ -43,6 +43,7 @@ function model_metatable:start()
     minetest.chat_send_all("Starting game... count " .. count)
     if count == self._settings.warmup_time then
       self._state = self.states.ACTIVE
+      self:_cleanup_warmup_nodes()
       self:timer(self._settings.game_time, function()
         self:_return_player_items()
         self:_game_finish_callback()
@@ -55,10 +56,53 @@ function model_metatable:get_settings()
   return self._settings
 end
 
-function model_metatable:start_game(seeker, hiders)
-  local pos = { x = self._pos.x, y = self._pos.y, z = self._pos.z }
+local function get_direction_vector(facing_side)
+  if facing_side == "n" then
+    return vector.new(0, 0, 1)
+  elseif facing_side == "s" then
+    return vector.new(0, 0, -1)
+  elseif facing_side == "w" then
+    return vector.new(-1, 0, 0)
+  elseif facing_side == "e" then
+    return vector.new(1, 0, 0)
+  end
+  return vector.new(0, 0, 1)
+end
 
-  pos.y = pos.y + 1
+-- Maybe temporary but working solution to cover seeker before the game starts
+function model_metatable:_set_seeker_cover(pos, do_unset)
+  pos = vector.new(math.floor(pos.x), math.floor(pos.y), math.floor(pos.z))
+  self._cover_nodes = {}
+  for x = pos.x - 1, pos.x + 1 do
+    for z = pos.z - 1, pos.z + 1 do
+      for y = pos.y - 3, pos.y + 3 do
+        local node_pos = vector.new(x, y, z)
+        local node = minetest.get_node(node_pos)
+        if node.name == "air" and not do_unset then
+          minetest.set_node(node_pos, { name = "hidenseek:cover" })
+          table.insert(self._cover_nodes, node_pos)
+        elseif node.name == "hidenseek:cover" and not do_unset then
+          table.insert(self._cover_nodes, node_pos)
+        elseif node.name == "hidenseek:cover" and do_unset then
+          minetest.set_node(node_pos, { name = "air" })
+        end
+      end
+    end
+  end
+end
+
+function model_metatable:_cleanup_warmup_nodes()
+  local nodes = self._cover_nodes or {}
+  for _, node in pairs(nodes) do
+    minetest.set_node(node, { name = "air" })
+  end
+  self._cover_nodes = {}
+end
+
+function model_metatable:start_game(seeker, hiders)
+  local pos = vector.add(self._pos, vector.new(0, 1, 0))
+  local dir = get_direction_vector(self._dir)
+  local spawn_line_dir = vector.cross(dir, vector.new(0, 1, 0))
 
   local seeker_player_object = minetest.get_player_by_name(seeker)
   if not seeker_player_object then
@@ -74,10 +118,16 @@ function model_metatable:start_game(seeker, hiders)
   end
 
   seeker_player_object:set_pos(pos)
+  self:_set_seeker_cover(pos)
 
-  for i = 1, #hider_player_objects do
-    pos.x = pos.x + 1
-    hider_player_objects[i]:set_pos(pos)
+  local num_hiders = #hider_player_objects
+  for i = 1, num_hiders do
+    local offset = vector.multiply(spawn_line_dir, 7 * (i - 0.5 * num_hiders) / num_hiders)
+    local new_pos = vector.add(
+      vector.add(pos, vector.multiply(dir, 3)),
+      offset
+    )
+    hider_player_objects[i]:set_pos(new_pos)
   end
 
   self._seekers = { seeker }
@@ -223,7 +273,6 @@ function model_metatable:_add_player_items()
     if player then
       HideNSeek.inventory_manager.backup_player_inventory(player)
       player:get_inventory():set_list("main", {
-        "hidenseek:invis",
         "hidenseek:capture",
         "hidenseek:search",
       })
