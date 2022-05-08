@@ -33,6 +33,7 @@ load_module "game/inventory_manager"
 -- register nodes
 load_module "nodes/node_startnode"
 load_module "nodes/node_border"
+load_module "nodes/node_cover"
 -- register skills
 load_module "skills/invis"
 load_module "skills/capture"
