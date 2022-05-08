@@ -41,6 +41,13 @@ local function init(mod_namespace)
     privs = { hs_admin = true },
     func = command_handler
   })
+  -- temporary command for testing only
+  minetest.register_chatcommand("hsg", {
+    privs = { hs_admin = true },
+    func = function(name)
+      return command_handler(name, "2 seeker1 hider1 hider2 hider3")
+    end
+  })
 end
 
 return {
