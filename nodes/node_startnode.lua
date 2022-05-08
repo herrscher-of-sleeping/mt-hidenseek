@@ -7,7 +7,7 @@ field[dir;direction;${dir}]
 
 local node_description = {
   description = "The initial node",
-  tiles = {"wool_white.png"},
+  tiles = { "hidenseek_startnode.png" },
   is_ground_content = true,
   groups = {  oddly_breakable_by_hand = 3 },
   on_construct = function(pos)
