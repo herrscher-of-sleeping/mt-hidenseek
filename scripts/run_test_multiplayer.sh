@@ -29,7 +29,8 @@ run_client()
 	else
 		custom_flags="--random-input"
 	fi
-	minetest --go $custom_flags --address $server_ip --port 30000 --name $username --password totally_random_password > logs/client_$1.log 2>&1 &
+	minetest --go $custom_flags --address $server_ip --port 30000 \
+		--name $username --password totally_random_password > logs/client_$1.log 2>&1 &
 	client_pids[$1]=$!
 	if [ $1 -eq 1 ]; then
 		echo ""
