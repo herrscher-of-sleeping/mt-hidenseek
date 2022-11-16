@@ -1,4 +1,11 @@
 {
-	"diagnostics.globals": [ "minetest" ]
+	"diagnostics.globals": [
+		"minetest",
+		"HideNSeek",
+		"getfenv",
+		"unpack",
+		"vector",
+		"playerphysics",
+		"Settings"
+	]
 }
-
