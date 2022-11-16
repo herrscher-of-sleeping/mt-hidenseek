@@ -1,5 +1,3 @@
-local HideNSeek
-
 local inventory_manager = {}
 
 function inventory_manager.backup_player_inventory(player)
@@ -53,16 +51,5 @@ local function on_join(player, last_login)
   try_restore_player_inventory_on_join(player)
 end
 
-local function init(mod_namespace, is_reload)
-  if is_reload then
-    minetest.log("warn", "Can't reload inventory_manager")
-    return
-  end
-  HideNSeek = mod_namespace
-  HideNSeek.inventory_manager = inventory_manager
-  minetest.register_on_joinplayer(on_join)
-end
-
-return {
-  init = init
-}
+HideNSeek.inventory_manager = inventory_manager
+minetest.register_on_joinplayer(on_join)

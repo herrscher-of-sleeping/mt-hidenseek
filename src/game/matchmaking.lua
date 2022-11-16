@@ -12,11 +12,4 @@ function matchmaking_queue.add_player(player)
   end
 end
 
-local function init(mod_namespace, is_reload)
-  HideNSeek = mod_namespace
-  HideNSeek.matchmaking_queue = matchmaking_queue
-end
-
-return {
-  init = init
-}
+HideNSeek.matchmaking_queue = matchmaking_queue

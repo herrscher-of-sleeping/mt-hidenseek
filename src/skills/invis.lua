@@ -1,4 +1,3 @@
-local HideNSeek
 local invisible_players
 local cooldown_by_player_name
 local playerphysics = playerphysics
@@ -87,8 +86,7 @@ local skill_description = {
   wield_scale = 1,
 }
 
-local function init(mod_namespace)
-  HideNSeek = mod_namespace
+local function init()
   invisible_players = {}
   cooldown_by_player_name = {}
 

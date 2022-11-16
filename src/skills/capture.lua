@@ -1,5 +1,3 @@
-local HideNSeek
-
 local tool_description = {
   description = "Capture tool",
   inventory_image = "hidenseek_capture_tool.png",
@@ -33,8 +31,7 @@ local tool_description = {
   wield_scale = 1,
 }
 
-local function init(mod_namespace)
-  HideNSeek = mod_namespace
+local function init()
   HideNSeek.register_skill("hidenseek:capture", tool_description)
 end
 

@@ -1,5 +1,3 @@
-local HideNSeek
-
 local function command_handler(name, param)
   local block = HideNSeek.db.get_map_position(param)
   if not block then
@@ -14,16 +12,9 @@ local function command_handler(name, param)
   return true
 end
 
-local function init(mod_namespace)
-  HideNSeek = mod_namespace
-  minetest.register_chatcommand("hs_tp", {
-    privs = { hs_admin = true },
-    description = "Teleport to map",
-    params = "<map name>",
-    func = command_handler,
-  })
-end
-
-return {
-  init = init
-}
+HideNSeek.register_chatcommand("tp", {
+  privs = { hs_admin = true },
+  description = "Teleport to map",
+  params = "<map name>",
+  handler = command_handler,
+})

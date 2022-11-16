@@ -1,126 +1,75 @@
-local HideNSeek = {}
+-- I wanna have good old require
+-- and don't want to deal with dofile
+-- as it makes things unnecessarily more complicated.
+-- So let's run mod in modified environment
+-- with own hand-crafted "require".
+local loaded = {}
 
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 
-local loaded_modules = {}
-
-function HideNSeek.load_module(modname)
-  if loaded_modules[modname] then
-    error("Module " .. modname .. " is already loaded")
+local function shallow_copy(tab)
+  local new_tab = {}
+  for k, v in pairs(tab) do
+    new_tab[k] = v
   end
-  loaded_modules[modname] = true
-  local path = modpath .. "/" .. modname .. ".lua"
-  return dofile(path).init(HideNSeek)
+  return new_tab
 end
 
-function HideNSeek.reload_module(modname)
-  if not loaded_modules[modname] then
-    return false, ""
+local module_env = shallow_copy(_ENV or getfenv())
+
+local function file_exists(path)
+  local fd = io.open(path, "r")
+  if not fd then
+    return false
   end
-  local path = modpath .. "/" .. modname .. ".lua"
-  dofile(path).init(HideNSeek, true)
+  fd:close()
   return true
 end
 
-local load_module = HideNSeek.load_module
--- register modules
-load_module "db"
-load_module "util"
-load_module "game/model"
-load_module "game/settings"
-load_module "game/register_skill"
-load_module "game/inventory_manager"
--- register nodes
-load_module "nodes/node_startnode"
-load_module "nodes/node_border"
-load_module "nodes/node_cover"
--- register skills
-load_module "skills/invis"
-load_module "skills/capture"
-load_module "skills/search"
--- register priveleges
-load_module "privileges/hs_admin"
--- register chat commands
-load_module "commands/hs_border"
-load_module "commands/hs_dump_maps"
-load_module "commands/hs_maps"
-load_module "commands/hs_start"
-load_module "commands/hs_tp"
-load_module "commands/hs_reload"
-load_module "commands/hs_spawn"
-
-local models = {}
-
-function HideNSeek.get_models()
-  return models
+local function loadfile(path, mode, module_env, chunk_name)
+  assert(type(path) == "string")
+  local fd = io.open(path, "r")
+  assert(fd)
+  local contents = fd:read("*a")
+  fd:close()
+  assert(module_env.HideNSeek)
+  local loaded = loadstring(contents, chunk_name, mode, module_env)
+  if setfenv then
+    setfenv(loaded, module_env)
+  end
+  assert(loaded)
+  return loaded
 end
 
-function HideNSeek.get_nearest_model(pos)
-  local nearest_distance = math.huge
-  local nearest_model_name
-  for model_name, model in pairs(models) do
-    -- minetest.chat_send_all("model_name: " .. tostring(model_name))
-    local model_pos = model:get_pos()
-    local dx = pos.x - model_pos.x
-    local dy = pos.y - model_pos.y
-    local dz = pos.z - model_pos.z
-    local distance = math.sqrt(dx * dx + dy * dy + dz * dz)
-    if distance < nearest_distance then
-      nearest_distance = distance
-      nearest_model_name = model_name
-    end
+local package = {
+  loaded = {},
+}
+
+local function require(path)
+  assert(type(path) == "string")
+  if package.loaded[path] then
+    return package.loaded[path]
   end
-  return models[nearest_model_name]
+  local folder_path = modpath .. "/" .. path .. "/init.lua"
+  local file_path = modpath .. "/" .. path .. ".lua"
+  local chunk_name = path
+  local loaded
+  if file_exists(folder_path) then
+    chunk_name = chunk_name .. "/init.lua"
+    loaded = loadfile(folder_path, "t", module_env, chunk_name)
+  elseif file_exists(file_path) then
+    chunk_name = chunk_name .. ".lua"
+    loaded = loadfile(file_path, "t", module_env, chunk_name)
+  else
+    error("File doesn't exist: " .. path)
+  end
+  assert(loaded, "Couldn't load module " .. path)
+  package.loaded[path] = loaded() or true
+  return package.loaded[path]
 end
 
-function HideNSeek.get_model_by_player(player)
-  if type(player) == "string" then
-    player = minetest.get_player_by_name(player)
-  end
-  if not player then
-    return
-  end
-  local pos = player:get_pos()
-  local model = HideNSeek.get_nearest_model(pos)
-  return model
-end
+module_env.require = require
+module_env.package = package
+module_env.HideNSeek = {} -- mod namespace
 
-function HideNSeek.set_spawn_point(pos)
-  HideNSeek._spawn_point = pos
-  HideNSeek.db.storage:set_string("spawn_point", minetest.serialize(pos))
-end
-
-function HideNSeek.get_spawn_point()
-  local spawn_point_str = HideNSeek.db.storage:get_string("spawn_point")
-  local spawn_point = { 0, 0, 0 }
-  if spawn_point_str and spawn_point_str ~= "" then
-    spawn_point = minetest.deserialize(spawn_point_str)
-  end
-  HideNSeek._spawn_point = spawn_point
-  return HideNSeek._spawn_point
-end
-
-local function initialize_models()
-  local all_maps = HideNSeek.db.get_all_maps()
-  for map_name, map_info in pairs(all_maps) do
-    local err
-    models[map_name], err = HideNSeek.Gamemodel(map_name, map_info)
-    if not models[map_name] then
-      return false, err
-    end
-  end
-end
-
-initialize_models()
-
-local t = 0
-
-minetest.register_globalstep(function(dt)
-  t = t + dt
-  if t > 1 then
-    t = 0
-  end
-  for _, model in pairs(models) do
-    model:update(dt)
-  end
-end)
+require("src")

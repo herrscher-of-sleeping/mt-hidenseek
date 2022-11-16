@@ -1,10 +1,7 @@
-local HideNSeek
-
-local function command_handler(name, param)
+local function command_handler(name, params)
   local util = HideNSeek.util
   local db = HideNSeek.db
   local models = HideNSeek:get_models()
-  local params = util.split_string(param)
 
   if #params < 3 then
     return nil, "Format: /start_game map_name seeker hider1 [hider2...]"
@@ -34,21 +31,8 @@ local function command_handler(name, param)
   return models[map_name]:start_game(seeker, hiders)
 end
 
-
-local function init(mod_namespace)
-  HideNSeek = mod_namespace
-  minetest.register_chatcommand("hs_start", {
-    privs = { hs_admin = true },
-    func = command_handler
-  })
-  minetest.register_chatcommand("hsg", {
-    privs = { hs_admin = true },
-    func = function(name)
-      return command_handler(name, "2 singleplayer singleplayer")
-    end
-  })
-end
-
-return {
-  init = init
-}
+HideNSeek.register_chatcommand("start", {
+  privs = { hs_admin = true },
+  description = "Start game",
+  handler = command_handler,
+})

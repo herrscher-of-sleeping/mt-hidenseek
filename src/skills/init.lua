@@ -1,5 +1,3 @@
-local HideNSeek
-
 --[[
 Skill cooldown display is implemented via tool wear
 Skills can have multiple charges which is implemented
@@ -62,11 +60,8 @@ local register_skill = function(name, desc)
   end
 end
 
-local function init(mod_namespace)
-  HideNSeek = mod_namespace
-  HideNSeek.register_skill = register_skill
-end
+HideNSeek.register_skill = register_skill
 
-return {
-  init = init
-}
+require("src/skills/capture").init()
+require("src/skills/invis").init()
+require("src/skills/search").init()

@@ -1,5 +1,3 @@
-local HideNSeek
-
 local BORDER_NODE_NAME = "hidenseek:border"
 
 -- TODO: use Lua Voxel Manipulator
@@ -151,20 +149,9 @@ local function command_handler(name, command)
   return subcommands[subcmd](name, params)
 end
 
-local function init(mod_namespace, is_reload)
-  HideNSeek = mod_namespace
-  if is_reload then
-    minetest.chat_send_all("Reload")
-    minetest.unregister_chatcommand("hs_border")
-  end
-  minetest.register_chatcommand("hs_border", {
-    privs = { hs_admin = true },
-    description = "Create map borders at current position",
-    params = "(circle <radius> <height>) | (rm <radius> <height>)",
-    func = command_handler,
-  })
-end
-
-return {
-  init = init
-}
+HideNSeek.register_chatcommand("border", {
+  privs = { hs_admin = true },
+  description = "Create map borders at current position",
+  params = "(circle <radius> <height>) | (rm <radius> <height>)",
+  func = command_handler,
+})

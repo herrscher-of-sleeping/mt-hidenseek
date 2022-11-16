@@ -1,6 +1,15 @@
-local HideNSeek
+--[[
+Model is an object containing information about game match
+and logic to work with that information.
+It has, for instance, its own state, timers that only work in specific state,
+it remembers players, and it dissolves when match ends,
+effectively releasing players from having their duty to complete the match
+and deleting all the timers.
+--]]
 
-local unpack = _G.unpack or table.unpack
+
+local settings_lib = require "src/lib/settings"
+local unpack = unpack or table.unpack
 local model_metatable = {}
 model_metatable.__index = model_metatable
 
@@ -35,7 +44,7 @@ end
 
 function model_metatable:start()
   self._state = self.states.WARMUP
-  self._settings = HideNSeek.read_settings()
+  self._settings = settings_lib.get_settings()
 
   self:_add_player_items()
 
@@ -291,9 +300,5 @@ local function make_model(map_name, map_info)
   return model
 end
 
-return {
-  init = function(mod_namespace)
-    HideNSeek = mod_namespace
-    HideNSeek.Gamemodel = make_model
-  end
-}
+HideNSeek.Gamemodel = make_model
+require "src/game/inventory_manager"

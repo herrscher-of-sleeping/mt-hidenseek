@@ -52,7 +52,7 @@ local function run_tests()
   run_insert_delete_test()
 end
 
-run_tests()
+-- run_tests()
 
 return {
   run_tests = run_tests,

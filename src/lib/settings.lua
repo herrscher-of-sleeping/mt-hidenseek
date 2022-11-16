@@ -7,7 +7,7 @@ local settings_fields = {
   "search_tool_cooldown",
 }
 
-local function read_settings()
+local function get_settings()
   local default_settings_object = Settings(minetest.get_modpath("hidenseek") .. "/default_settings.conf")
   local settings_object = minetest.settings
 
@@ -26,11 +26,6 @@ local function read_settings()
   return settings_table
 end
 
-
-local function init(mod_namespace)
-  mod_namespace.read_settings = read_settings
-end
-
 return {
-  init = init,
+  get_settings = get_settings,
 }

@@ -8,8 +8,4 @@ function M.split_string(str)
   return substrings
 end
 
-return {
-  init = function(mod_namespace)
-    mod_namespace.util = M
-  end
-}
+return M
