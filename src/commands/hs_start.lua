@@ -4,7 +4,7 @@ local function command_handler(name, params)
   local models = HideNSeek:get_models()
 
   if #params < 3 then
-    return nil, "Format: /start_game map_name seeker hider1 [hider2...]"
+    return nil, "Format: /hs start map_name seeker hider1 [hider2...]"
   end
   local map_name = params[1]
   local err
@@ -34,5 +34,6 @@ end
 HideNSeek.register_chatcommand("start", {
   privs = { hs_admin = true },
   description = "Start game",
+  params = "map_name seeker hider1 [hider2...]",
   handler = command_handler,
 })
