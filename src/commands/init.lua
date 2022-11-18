@@ -1,5 +1,6 @@
 local argument_parser = require "src/lib/argument_parser"
 local commands = {}
+HideNSeek.registered_commands = commands
 
 local function get_type(arg_desc)
   local _type = arg_desc[2]
@@ -45,6 +46,7 @@ local function register_chatcommand(name, params)
   commands[name] = {
     handler = params.handler,
     description = params.description,
+    params = params.params,
   }
 end
 
@@ -63,3 +65,4 @@ require("src/commands/hs_queue")
 require("src/commands/hs_spawn")
 require("src/commands/hs_start")
 require("src/commands/hs_tp")
+require("src/commands/hs_help")
