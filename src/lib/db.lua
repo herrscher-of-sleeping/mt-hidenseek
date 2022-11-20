@@ -25,7 +25,9 @@ function M.get_map_info(map_name)
 end
 
 function M.get_map_position(map_name)
+  assert(type(map_name) == "string")
   local maps = minetest.deserialize(storage:get_string("maps")) or {}
+  assert(maps[map_name])
   return maps[map_name].position
 end
 
