@@ -39,7 +39,19 @@ local function command_handler(name, params_string)
   if not commands[cmd] then
     return print_usage()
   end
-  return commands[cmd].handler(name, params or {})
+  local ok, ret1, ret2 = pcall(commands[cmd].func, name, params or {})
+  local lua_error_occured = not ok
+  if lua_error_occured then
+    local lua_error = ret1
+    minetest.log("error", lua_error)
+    return nil, "Lua error occured, see logs"
+  end
+  local logic_error_occured = not ret1
+  if logic_error_occured then
+    local logic_error = ret2
+    return nil, logic_error
+  end
+  return ret1, ret2
 end
 
 local function register_chatcommand(name, params)
