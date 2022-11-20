@@ -1,7 +1,11 @@
 local function command_handler(name, param)
-  local block = HideNSeek.db.get_map_position(param)
+  local map_name = param[1]
+  if not map_name then
+    return nil, "Usage: /hs tp <map_name>"
+  end
+  local block = HideNSeek.db.get_map_position(map_name)
   if not block then
-    return false, "No such map: " .. param
+    return false, "No such map: " .. map_name
   end
   local pos = {
     x = block.x,
