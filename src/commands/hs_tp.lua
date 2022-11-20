@@ -16,5 +16,5 @@ HideNSeek.register_chatcommand("tp", {
   privs = { hs_admin = true },
   description = "Teleport to map",
   params = "<map name>",
-  handler = command_handler,
+  func = command_handler,
 })

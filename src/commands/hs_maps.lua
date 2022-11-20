@@ -11,5 +11,5 @@ end
 HideNSeek.register_chatcommand("maps", {
   privs = { hs_admin = true },
   description = "List maps",
-  handler = command_handler
+  func = command_handler
 })

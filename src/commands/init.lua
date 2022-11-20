@@ -44,7 +44,7 @@ end
 
 local function register_chatcommand(name, params)
   commands[name] = {
-    handler = params.handler,
+    func = params.func,
     description = params.description,
     params = params.params,
   }

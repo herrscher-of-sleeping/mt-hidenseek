@@ -11,6 +11,6 @@ end
 HideNSeek.register_chatcommand("games", {
   privs = { hs_admin = true },
   description = "Print states of running game instances",
-  handler = command_handler,
+  funnc = command_handler,
 })
 

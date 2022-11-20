@@ -17,5 +17,5 @@ end
 HideNSeek.register_chatcommand("help", {
   privs = { hs_admin = true },
   description = "Show help about /hs commands",
-  handler = command_handler
+  func = command_handler
 })

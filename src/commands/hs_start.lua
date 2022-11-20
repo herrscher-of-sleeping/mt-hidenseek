@@ -35,5 +35,5 @@ HideNSeek.register_chatcommand("start", {
   privs = { hs_admin = true },
   description = "Start game",
   params = "map_name seeker hider1 [hider2...]",
-  handler = command_handler,
+  func = command_handler,
 })
