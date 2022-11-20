@@ -7,7 +7,7 @@ minetest=minetest
 
 run_server()
 {
-	$minetest --server --gameid "MineClone 5 No Villagers" --world hs2 --port 30000 hs2 > logs/server.log 2>&1 &
+	$minetest --server --gameid mineclone5_novillagers --world hs2 --port 30000 hs2 > logs/server.log 2>&1 &
 	server_pid=$!
 }
 
