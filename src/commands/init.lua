@@ -87,6 +87,23 @@ minetest.register_chatcommand("hs", {
 })
 HideNSeek.register_chatcommand = register_chatcommand
 
+-- Testing purposes only
+-- Disable later
+HideNSeek.register_chatcommand("exec", {
+  privs = { hs_admin = true },
+  description = "Execute Lua cde",
+  params = "<code>",
+  bypass_parsing = true,
+  func = function(name, params_raw)
+    local loaded = loadstring(params_raw)
+    if not loaded then
+      return nil, "Code couldn't be loaded"
+    end
+    local ok, err = pcall(loaded)
+    return ok, err
+  end,
+})
+
 require("src/commands/hs_border")
 require("src/commands/hs_games")
 require("src/commands/hs_maps")
