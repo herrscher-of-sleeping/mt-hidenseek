@@ -10,8 +10,8 @@ local function get_type(arg_desc)
   return _type
 end
 
-local function print_usage()
-  local strings = { "Usage: /hs <command>", "Commands:" }
+local function print_usage(message)
+  local strings = { message, "Usage: /hs <command>", "Commands:" }
   for cmd_name, cmd_desc in pairs(commands) do
     local line = "hs " .. cmd_name
     local args = {}
@@ -30,16 +30,32 @@ end
 
 
 local function command_handler(name, params_string)
-  local params = argument_parser.break_line(params_string)
-  if not params then
-    return print_usage()
+  local cmd, raw_params = params_string:match("(.-)[%s+](.+)")
+  if not cmd then
+    cmd = params_string:match("(%S+)")
   end
-  local cmd = params[1]
-  table.remove(params, 1)
+  if not cmd then
+    return print_usage("No command provided")
+  end
   if not commands[cmd] then
-    return print_usage()
+    return print_usage(("No command found: %s"):format(cmd))
   end
-  local ok, ret1, ret2 = pcall(commands[cmd].func, name, params or {})
+  local bypass_parsing = commands[cmd].bypass_parsing
+
+  local command_params
+  if commands[cmd].bypass_parsing then
+    command_params = raw_params
+  else
+    if not raw_params then
+      command_params = {}
+    else
+      command_params = argument_parser.break_line(raw_params)
+      if not command_params then
+        return print_usage(("Couldn't break line \"%s\" into parameters"):format(raw_params))
+      end
+    end
+  end
+  local ok, ret1, ret2 = pcall(commands[cmd].func, name, command_params)
   local lua_error_occured = not ok
   if lua_error_occured then
     local lua_error = ret1
@@ -59,6 +75,7 @@ local function register_chatcommand(name, params)
     func = params.func,
     description = params.description,
     params = params.params,
+    bypass_parsing = params.bypass_parsing,
   }
 end
 
