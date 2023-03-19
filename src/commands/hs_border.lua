@@ -9,13 +9,23 @@ local function safe_set_border_node(pos)
   local node = minetest.get_node(pos)
   if node.name == "air" then
     minetest.set_node(pos, { name = BORDER_NODE_NAME } )
+  elseif minetest.get_item_group(node.name, "water") > 0 then
+    local old_name = node.name
+    minetest.set_node(pos, { name = BORDER_NODE_NAME } )
+    local meta = minetest.get_meta(pos)
+    meta:set_string("backup", old_name)
   end
 end
 
 local function safe_unset_border_node(pos)
   local node = minetest.get_node(pos)
   if node.name == BORDER_NODE_NAME then
-    minetest.set_node(pos, { name = "air" } )
+    local meta = minetest.get_meta(pos)
+    local name = meta:get_string("backup")
+    if not name or name == "" then
+      name = "air"
+    end
+    minetest.set_node(pos, { name = name } )
   end
 end
 
