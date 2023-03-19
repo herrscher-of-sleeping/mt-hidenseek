@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 server_ip="${MINETEST_SERVER_IP:=127.0.0.1}"
 n_clients=$1
 server_pid=

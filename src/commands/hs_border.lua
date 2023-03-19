@@ -136,9 +136,7 @@ subcommands.rm = function(name, params)
   return remove_wall(pos, radius, height or radius)
 end
 
-local function command_handler(name, command)
-  local params = HideNSeek.util.split_string(command)
-
+local function command_handler(name, params)
   local subcmd = params[1]
 
   if not subcommands[subcmd] then
