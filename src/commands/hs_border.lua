@@ -1,6 +1,9 @@
+-- TODO: convert /hs border circle into using set points, probably rename it to ellipse
+-- TODO: use Lua Voxel Manipulator (maybe?)
+
 local BORDER_NODE_NAME = "hidenseek:border"
 
--- TODO: use Lua Voxel Manipulator
+local points = {}
 
 local function safe_set_border_node(pos)
   local node = minetest.get_node(pos)
@@ -23,7 +26,7 @@ local function make_column(x, y, z, h)
   end
 end
 
-local function add_wall(pos, radius, height)
+local function add_ring_wall(pos, radius, height)
   local x = radius
   local z = 0
 
@@ -61,10 +64,31 @@ local function add_wall(pos, radius, height)
   return true
 end
 
-local function remove_wall(pos, radius, height)
-  for x = pos.x - radius, pos.x + radius do
-    for z = pos.z - radius, pos.z + radius do
-      for y = pos.y - height, pos.y + height do
+local function add_rect_wall(point1, point2)
+  local x0 = math.min(point1.x, point2.x)
+  local x1 = math.max(point1.x, point2.x)
+  local z0 = math.min(point1.z, point2.z)
+  local z1 = math.max(point1.z, point2.z)
+  -- Remember that y is vertical axis in Minetest
+  local y0 = math.min(point1.y, point2.y)
+  local y1 = math.max(point1.y, point2.y)
+  local height = y1 - y0
+
+  for x = x0, x1 do
+    make_column(x, y0, z0, height)
+    make_column(x, y0, z1, height)
+  end
+  for z = z0 + 1, z1 - 1 do
+    make_column(x0, y0, z, height)
+    make_column(x1, y0, z, height)
+  end
+end
+
+local function remove_wall(point1, point2)
+
+  for x = math.min(point1.x, point2.x), math.max(point1.x, point2.x) do
+    for z = math.min(point1.z, point2.z), math.max(point1.z, point2.z) do
+      for y = math.min(point1.y, point2.y), math.max(point1.y, point2.y) do
         safe_unset_border_node({ x = x, y = y, z = z })
       end
     end
@@ -102,38 +126,29 @@ subcommands.circle = function(name, params)
   end
 
   local pos = get_rounded_player_position(name)
-  return add_wall(pos, radius, height)
+  return add_ring_wall(pos, radius, height)
+end
+
+subcommands.rect = function(name, params)
+  local point1 = points[1]
+  local point2 = points[2]
+  if not point1 or not point2 then
+    return nil, "Set points first using /hs border set_point 1/2"
+  end
+  return add_rect_wall(point1, point2)
+end
+
+subcommands.set_point = function(name, params)
+  local pos = get_rounded_player_position(name)
+  local point_num = tonumber(params[1])
+  points[point_num] = pos
+  return true
 end
 
 subcommands.rm = function(name, params)
-  local radius = tonumber(params[1])
-  local height = tonumber(params[2])
-  local is_force = params[3] == "force"
-  if not radius or radius <= 0 then
-    return false, "Radius should be integer > 0"
-  end
-  if params[2] == "force" then
-    height = radius
-    is_force = true
-  end
-  if not height then height = radius; end
-  if not radius or radius <= 0 then
-    return false, "Radius should be integer > 0"
-  end
-  if height and height <= 0 then
-    return false, "Height should be integer > 0"
-  end
-  if not is_force then
-    if radius > 50 then
-      return false, "Radius shouldn't be > 50"
-    end
-    if height > 50 then
-      return false, "Height shouldn't be > 50"
-    end
-  end
-
-  local pos = get_rounded_player_position(name)
-  return remove_wall(pos, radius, height or radius)
+  local point1 = points[1]
+  local point2 = points[2]
+  return remove_wall(point1, point2)
 end
 
 local function command_handler(name, params)
@@ -150,6 +165,6 @@ end
 HideNSeek.register_chatcommand("border", {
   privs = { hs_admin = true },
   description = "Create map borders at current position",
-  params = "(circle <radius> <height>) | (rm <radius> <height>)",
+  params = "(circle <radius> <height>) | (rect) | (set_point n) | (rm)",
   func = command_handler,
 })
