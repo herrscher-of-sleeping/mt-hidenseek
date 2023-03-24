@@ -1,5 +1,3 @@
-local HideNSeek
-
 local form = [[
 field[name;name;${name}]
 field[dir;direction;${dir}]
@@ -52,8 +50,7 @@ local node_description = {
   end,
 }
 
-local function init(mod_namespace)
-  HideNSeek = mod_namespace
+local function init()
   minetest.register_node("hidenseek:startnode", node_description)
 end
 

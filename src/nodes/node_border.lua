@@ -1,4 +1,4 @@
-local function init(HideNSeek)
+local function init()
   minetest.register_node("hidenseek:border", {
     description = "Glasslike Framed Drawtype Border Node",
     drawtype = "glasslike",
