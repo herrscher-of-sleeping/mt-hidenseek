@@ -29,7 +29,7 @@ function model_metatable:timer(length, on_finish)
   return timer
 end
 
-function model_metatable:multitimer(interval, runs, on_finish)
+function model_metatable:repeating_timer(interval, runs, on_finish)
   local timer = {
     remaining_time = interval,
     remaining_runs = runs,
@@ -37,7 +37,7 @@ function model_metatable:multitimer(interval, runs, on_finish)
     interval = interval,
     runs = runs,
   }
-  self._multitimers[timer] = true
+  self._repeating_timers[timer] = true
 
   return timer
 end
@@ -48,7 +48,7 @@ function model_metatable:start()
 
   self:_add_player_items()
 
-  self:multitimer(1, self._settings.warmup_time, function(count)
+  self:repeating_timer(1, self._settings.warmup_time, function(count)
     minetest.chat_send_all("Starting game... count " .. count)
     if count == self._settings.warmup_time then
       self._state = self.states.ACTIVE
@@ -191,13 +191,13 @@ function model_metatable:_update_timers(dt)
     end
   end
 
-  for timer in pairs(self._multitimers) do
+  for timer in pairs(self._repeating_timers) do
     if timer.remaining_time <= 0 then
       timer.remaining_time = timer.remaining_time + timer.interval
       timer.remaining_runs = timer.remaining_runs - 1
       timer.callback(timer.runs - timer.remaining_runs)
       if timer.remaining_runs == 0 then
-        self._multitimers[timer] = nil
+        self._repeating_timers[timer] = nil
       end
     else
       timer.remaining_time = timer.remaining_time - dt
@@ -212,7 +212,7 @@ function model_metatable:update(dt)
       minetest.chat_send_all("gg wp")
       self._state = self.states.FADE
       self._timers = {}
-      self._multitimers = {}
+      self._repeating_timers = {}
       self:_return_player_items()
       self:timer(self._settings.finish_time, function()
         self:_game_finish_callback()
@@ -292,7 +292,7 @@ local function make_model(map_name, map_info)
     _captured_hiders = {},
     _state = model_metatable.states.INACTIVE,
     _timers = {},
-    _multitimers = {},
+    _repeating_timers = {},
   }
 
   setmetatable(model, model_metatable)

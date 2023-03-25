@@ -36,7 +36,7 @@ local register_skill = function(name, desc)
         end
         player:get_inventory():set_stack("main", position, item_name .. " 1 " .. MAX_WEAR)
 
-        model:multitimer(1, desc.cooldown, function(count)
+        model:repeating_timer(1, desc.cooldown, function(count)
           if count == desc.cooldown then
             player:get_inventory():set_stack("main", position, item_name .. " 1")
           else
