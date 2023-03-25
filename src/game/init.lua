@@ -10,9 +10,27 @@ and deleting all the timers.
 
 local settings_lib = require "src/lib/settings"
 local unpack = unpack or table.unpack
-local model_metatable = {}
-model_metatable.__index = model_metatable
 
+---@alias HideNSeek.Direction "n"|"s"|"w"|"e"
+
+---@class HideNSeek.Model
+---@field private _map_name string
+---@field private _pos mt.Vector
+---@field private _dir HideNSeek.Direction
+---@field private _seekers {} TODO
+---@field private _hiders {} TODO
+---@field private _seekers_set { [table]: boolean }
+---@field private _hiders_set { [table]: boolean }
+---@field private _captured_hiders {} TODO
+---@field private _state HideNSeek.Model.states
+---@field private _timers {} TODO
+---@field private _repeating_timers {} TODO
+---@field private _settings { [string]: any }
+local model_metatable = {}
+
+model_metatable.__index = model_metatable ---@private
+
+---@enum HideNSeek.Model.states
 model_metatable.states = {
   INACTIVE = 1,
   WARMUP = 2,
@@ -20,6 +38,13 @@ model_metatable.states = {
   FADE = 4,
 }
 
+---@class HideNSeek.Timer
+---@field remaining_time number
+---@field callback fun(run_number: integer)
+
+---@param length number
+---@param on_finish fun()
+---@return HideNSeek.Timer
 function model_metatable:timer(length, on_finish)
   if not length then
     error("Length should positive number")
@@ -29,6 +54,17 @@ function model_metatable:timer(length, on_finish)
   return timer
 end
 
+---@class HideNSeek.repeating_timer
+---@field remaining_time number
+---@field remaining_runs integer
+---@field callback fun(run_number: integer)
+---@field interval number
+---@field runs integer
+
+---@param interval number
+---@param runs integer
+---@param on_finish fun(run_number: integer)
+---@return HideNSeek.repeating_timer
 function model_metatable:repeating_timer(interval, runs, on_finish)
   local timer = {
     remaining_time = interval,
@@ -60,10 +96,13 @@ function model_metatable:start()
   end)
 end
 
+---@return { [string]: any }
 function model_metatable:get_settings()
   return self._settings
 end
 
+---@param facing_side HideNSeek.Direction
+---@return mt.Vector
 local function get_direction_vector(facing_side)
   if facing_side == "n" then
     return vector.new(0, 0, 1)
@@ -77,6 +116,8 @@ local function get_direction_vector(facing_side)
   return vector.new(0, 0, 1)
 end
 
+---@param seeker string
+---@param hiders string[]
 function model_metatable:start_game(seeker, hiders)
   local pos = vector.add(self._pos, vector.new(0, 1, 0))
   local dir = get_direction_vector(self._dir)
@@ -120,10 +161,12 @@ function model_metatable:start_game(seeker, hiders)
   return true, "Teleported players to map '" .. self._map_name .. "'"
 end
 
+---@return mt.Vector
 function model_metatable:get_pos()
   return { x = self._pos.x, y = self._pos.y, z = self._pos.z }
 end
 
+---@return {name: string, pos: mt.Vector}[]
 function model_metatable:get_seekers()
   local seekers = {}
   for _, player_name in pairs(self._seekers) do
@@ -138,6 +181,7 @@ function model_metatable:get_seekers()
   return seekers
 end
 
+---@return {name: string, pos: mt.Vector}[]
 function model_metatable:get_hiders()
   local hiders = {}
   for _, player_name in pairs(self._hiders) do
@@ -152,6 +196,10 @@ function model_metatable:get_hiders()
   return hiders
 end
 
+---@param seeker_name string
+---@param player_name string
+---@return boolean ok
+---@return string? err
 function model_metatable:capture_hider(seeker_name, player_name)
   local seeker_found
   for i = 1, #self._seekers do
@@ -176,11 +224,14 @@ function model_metatable:capture_hider(seeker_name, player_name)
   return false, "Couldn't find hider " .. player_name
 end
 
+---@private
+---Activated on game finish
 function model_metatable:_game_finish_callback()
   self._state = self.states.INACTIVE
   minetest.chat_send_all("ggwp")
 end
 
+---@private
 function model_metatable:_update_timers(dt)
   for timer in pairs(self._timers) do
     if timer.remaining_time <= 0 then
@@ -205,6 +256,7 @@ function model_metatable:_update_timers(dt)
   end
 end
 
+---@param dt number
 function model_metatable:update(dt)
   self:_update_timers(dt)
   if self._state == self.states.ACTIVE then
@@ -221,6 +273,7 @@ function model_metatable:update(dt)
   end
 end
 
+---@return string[]
 function model_metatable:get_all_players()
   local all_players_in_model = {}
   for _, name in pairs(self._seekers) do
@@ -232,11 +285,14 @@ function model_metatable:get_all_players()
   return all_players_in_model
 end
 
+---@private
+---Backups player's inventory and replaces inventory with "ability" items
 function model_metatable:_add_player_items()
   local hiders = self:get_hiders()
   for _, hider in pairs(hiders) do
     local player = minetest.get_player_by_name(hider.name)
     if player then
+      ---@type mt.ItemStack
       HideNSeek.inventory_manager.backup_player_inventory(player)
       player:get_inventory():set_list("main", {
         "hidenseek:invis",
@@ -258,6 +314,8 @@ function model_metatable:_add_player_items()
   end
 end
 
+---@private
+---Restores player's inventory after the game
 function model_metatable:_return_player_items()
   local all_players_in_model = self:get_all_players()
   for _, name in pairs(all_players_in_model) do
@@ -268,17 +326,23 @@ function model_metatable:_return_player_items()
   end
 end
 
+---@return HideNSeek.Model.states
 function model_metatable:get_state()
   return self._state
 end
 
+---@return string # map name on which model is running
 function model_metatable:get_name()
   return self._map_name
 end
 
+---TODO: What does it do?
 function model_metatable:destroy()
 end
 
+---@param map_name string
+---@param map_info table
+---@return HideNSeek.Model
 local function make_model(map_name, map_info)
   if not map_info.position then
     minetest.log("error", "map_info: " .. minetest.serialize(map_info))
