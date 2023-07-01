@@ -5,11 +5,11 @@ n_clients=$1
 server_pid=
 client_pids=
 
-minetest=minetest
+MINETEST:=minetest
 
 run_server()
 {
-	$minetest --server --gameid mineclone5_novillagers --world hs2 --port 30000 hs2 > logs/server.log 2>&1 &
+	$MINETEST --server --gameid mineclone5_novillagers --world hs2 --port 30000 hs2 > logs/server.log 2>&1 &
 	server_pid=$!
 }
 
@@ -33,7 +33,7 @@ run_client()
 	else
 		custom_flags="--random-input"
 	fi
-	$minetest --go $custom_flags --address $server_ip --port 30000 \
+	$MINETEST --go $custom_flags --address $server_ip --port 30000 \
 		--name $username --password totally_random_password > logs/client_$1.log 2>&1 &
 	client_pids[$1]=$!
 	if [ $1 -eq 1 ]; then
